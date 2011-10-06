@@ -1,6 +1,11 @@
 #include <EEPROM.h>
 #include <SPI.h>
 
+/* 
+  Everything below this comment is the mp3901 ADC library 
+  It needs to be here because it hasn't been library-ized yet.
+*/
+
 #define u8	unsigned char		// Unsigned 8bit memory type(0 to 255)
 #define s8	char			// Signed 8bit memory type(-128 to 127)
 #define u16	unsigned int		// Unsigned 16bit memory type(0 to 65,535)
