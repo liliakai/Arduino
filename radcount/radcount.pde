@@ -1,5 +1,4 @@
 #include <EEPROM.h>
-#include <SD.h>
 #include <SPI.h>
 
 #define u8	unsigned char		// Unsigned 8bit memory type(0 to 255)
