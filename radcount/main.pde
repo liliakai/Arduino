@@ -4,7 +4,7 @@
 #define CAP_CLEAR       A0
 #define KEEP_ALIVE_PIN  33
 
-byte bins[4096];
+unsigned short bins[4096];
 
 unsigned long data1;
 unsigned long thresh = 0xFFF;
@@ -20,12 +20,10 @@ void setup() {
   pinMode(KEEP_ALIVE_PIN, INPUT);
   while (!digitalRead(KEEP_ALIVE_PIN)) ;
 
-  Serial.begin(2400);
+  Serial.begin(115200);
 
   shutdownflag = false;
   pulsecount = 0;
-
-  beginRTC();
 
   /* adc setup */
   pinMode(CAP_CLEAR, OUTPUT);          // write high then low to drain capture-and-hold capacitor
@@ -39,11 +37,6 @@ void setup() {
   digitalWrite(ADC_RESET_PIN, HIGH);   // MUST BE HIGH FOR mcp3901 TO WORK
 
   beginADC();
-  unsigned long date,time;
-  readRTC(&date,&time);
-  printTimestamp(date,time);
-  unsigned long now = unixtime(date,time); 
-  starttime = now;
 }
 
 void shutdown() {
@@ -63,10 +56,6 @@ void shutdown() {
 
   while(!digitalRead(KEEP_ALIVE_PIN));  
   beginADC();
-  unsigned long date,time;
-  readRTC(&date,&time);
-  unsigned long now = unixtime(date,time);
-  starttime = now;
   shutdownflag = false;
   pulsecount = 0;
 }
@@ -98,8 +87,8 @@ void loop() {
         clearCapacitor();
         handleData(chan1);
         pulsecount++;
-
-        //Serial.println(chan2,HEX);
+        
+        //Serial.println(chan1,HEX);
         vsum += chan2;
         vcnt++;
       }
@@ -108,13 +97,17 @@ void loop() {
 }
 
 void handleData(unsigned long data) {
-  int idx = data >> 20;
-  ++bins[idx];
-  if (bins[idx] == 255) {
+  int idx = data >> 11; // 23 bits -> 12 bits
+  ++bins[idx];  
+  if (bins[idx] == 0xFFFF)
+  {
     for (int i =0; i < 4096; ++i) {
-      bins[i] /= 2;
+      bins[i] >>= 2;
     }      
   }
+//  if (idx > 1500) Serial.println(data);
+  
+  
 }
 void handleCommand(char c) {
   if (c == 'r'){
@@ -124,10 +117,8 @@ void handleCommand(char c) {
       int val = bins[i];
       Serial.write(val);
       Serial.write(val>>8);
-      Serial.write(val>>16);
-      Serial.write(val>>24);
-
-      delayMicroseconds(100);  
+     
+      delayMicroseconds(50);  
     }
   }
   else if (c == 'c') {
@@ -144,7 +135,7 @@ void clearCapacitor(){
   digitalWrite(CAP_CLEAR,LOW);
 }
 
-void request_shutdown(){
+void request_shutdown() {
   shutdownflag = true;
 }
 
