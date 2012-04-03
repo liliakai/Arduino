@@ -1,11 +1,14 @@
-#define NUMWIRES 21
+#define NUMWIRES 22
+
 int cn[NUMWIRES] = {
-  //00   1   2   3   4   5   6   7   8   9  10
+//00  1   2   3   4   5   6   7   8   9  10
   4, 75, A0, A1, A2, A3, A4, A5, 52, 29, 43,
   53, 10, 39, 47, 77, 17, 16, 76, 19, 18 };     // A15 also available (CN12)
-// 11  12  13  14  15  16  17  18  19  20  21
+//11  12  13  14  15  16  17  18  19  20  21
 int group[NUMWIRES];
 int queue[NUMWIRES];
+
+//other inputs: 81,82,83
 
 #define NUMKEYS 47
 char key[NUMKEYS] = {
@@ -18,6 +21,8 @@ int pins2keys[NUMWIRES][NUMWIRES];
  int outputs[NUMOUT] = {  5, 6, 7, 8, 79, 9, 78, 80 }; */
 
 void setup() {
+
+  CNPUE = 0x3FFFFF;
   for (int i=0; i <  NUMWIRES; ++i) {
     pinMode(cn[i],INPUT);
     digitalWrite(cn[i],HIGH);
@@ -80,13 +85,21 @@ boolean scan_for_groups() {
     digitalWrite(cn[i],LOW);
     for (int j=i+1; j < NUMWIRES; ++j) {
       if (digitalRead(cn[j]) == 0) {
-        active = true;
         if (group[j] == -1) {
+          
+          Serial.print("Output, low: pin ");
+          Serial.println(cn[i]);
+    
+          Serial.print("Input low: pin ");
+          Serial.println(cn[j]);
+        
+          active = true;
           group[j] = !group[i];    
           print_pin(j);
           print_groups();
         }
       }
+
     }
     pinMode(cn[i],INPUT);
     digitalWrite(cn[i],HIGH);
@@ -131,11 +144,4 @@ void print_pin(int idx) {
     Serial.println(cn[idx]);
   }
 }
-
-
-
-
-
-
-
 
