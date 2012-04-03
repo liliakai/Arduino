@@ -1,9 +1,9 @@
 #define NUMWIRES 21
 int cn[NUMWIRES] = {
   //00   1   2   3   4   5   6   7   8   9  10
-  04, 75, A0, A1, A2, A3, A4, A5, 52, 29, 43,
-  A15, 10, 53, 47, 77, 17, 16, 76, 19, 18 };     // 39 also available (CN14)
-//11   12  13  14  15  16  17  18  19  20
+  4, 75, A0, A1, A2, A3, A4, A5, 52, 29, 43,
+  53, 10, 39, 47, 77, 17, 16, 76, 19, 18 };     // A15 also available (CN12)
+// 11  12  13  14  15  16  17  18  19  20  21
 int group[NUMWIRES];
 int queue[NUMWIRES];
 
@@ -23,6 +23,9 @@ void setup() {
     digitalWrite(cn[i],HIGH);
     group[i] = -1;
     queue[i] = -1;
+    for (int j=0; j <  NUMWIRES; ++j) {
+      pins2keys[i][j] = -1;
+    }
   }
   group[0] = 0;
   queue[0] = 0;
@@ -36,11 +39,16 @@ void loop() {
     while (scan_for_groups());  
   }
   else {
-    for (int i =0; i< NUMKEYS; ++i) {
+    for (int i=0; i <  NUMWIRES; ++i) {
       Serial.print("Press: ");
       Serial.print(key[i]);
-      scan_for_letter(key[i]);
+      while (!scan_for_letter(key[i]) && Serial.read() != 'n') ;
     }  
+    for (int i=0; i <  NUMWIRES; ++i) {
+      for (int j=0; j <  NUMWIRES; ++j) {
+        Serial.print(pins2keys[i][j]);
+      }
+    }
   }
 }
 
@@ -67,32 +75,10 @@ boolean scan_for_groups() {
   for (int i=0; i < NUMWIRES; ++i) {
     if (group[i] == -1)
       continue;
+
     pinMode(cn[i],OUTPUT);
     digitalWrite(cn[i],LOW);
     for (int j=i+1; j < NUMWIRES; ++j) {
-      if (digitalRead(cn[j]) == 0) {
-        if (group[j] == -1) {
-          active = true;
-          group[j] = !group[i];    
-          print_pin(j);
-          print_groups();
-        }
-      }
-    }
-    pinMode(cn[i],INPUT);
-    digitalWrite(cn[i],HIGH);
-  }
-  return active;
-}
-
-void scan_for_letter(int idx) {
-  boolean active = false;
-  for (int i=0; i < NUMWIRES; ++i) {
-    if (group[i] == -1)
-      continue;
-    pinMode(cn[i],OUTPUT);
-    digitalWrite(cn[i],LOW);
-    for (int j=0; j < NUMWIRES; ++j) {
       if (digitalRead(cn[j]) == 0) {
         active = true;
         if (group[j] == -1) {
@@ -105,6 +91,31 @@ void scan_for_letter(int idx) {
     pinMode(cn[i],INPUT);
     digitalWrite(cn[i],HIGH);
   }
+  return active;
+}
+
+boolean scan_for_letter(int idx) {
+  for (int i=0; i < NUMWIRES; ++i) {
+    if (group[i] == -1)
+      continue;
+    pinMode(cn[i],OUTPUT);
+    digitalWrite(cn[i],LOW);
+    for (int j=i+1; j < NUMWIRES; ++j) {
+      if (digitalRead(cn[j]) == 0) {
+        if (pins2keys[i][j] == -1) {
+          pins2keys[i][j] = idx; 
+          print_pin(i);   
+          print_pin(j);
+          return true;
+
+        }
+      }
+    }
+    pinMode(cn[i],INPUT);
+    digitalWrite(cn[i],HIGH);
+  }
+
+  return false;
 }
 void print_pin(int idx) {
   Serial.print(idx);
@@ -120,17 +131,6 @@ void print_pin(int idx) {
     Serial.println(cn[idx]);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
 
 
 
